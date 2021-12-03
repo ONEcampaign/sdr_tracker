@@ -87,5 +87,5 @@ if __name__ == '__main__':
     
     df = get_flourish_map_df(slice_on_column = 'continent',
                              slice_by_values=['Africa'])
-    df.to_csv(f'{config.paths.output}/map_template',
+    df.to_csv(f'{config.paths.output}/map_template.csv',
               index=False)
