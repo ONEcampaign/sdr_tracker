@@ -15,6 +15,10 @@ class Paths:
     def scripts(self):
         return os.path.join(self.project_dir, 'scripts')
     
+    @property()
+    def output(self):
+        return os.path.join(self.project_dir, 'output')
+    
     @property
     def glossaries(self):
         return os.path.join(self.project_dir, 'scripts', 'glossaries')
