@@ -29,12 +29,11 @@ def _get_world_geometries() -> dict:
     return g.set_index('iso_code').T.to_dict('records')[0]
 
 
-def _get_country_dict(keys: Optional['list'] = ['ISO3', 'name_short', 'continent'],
-                      regex_on: Optional['bool'] = False) -> pd.DataFrame:
+def _get_country_df(columns: Optional['list'] = ['ISO3', 'name_short', 'continent']) -> pd.DataFrame:
     """
     creates a dictionary for world country names, codes, regions etc.
 
-        keys:
+        columns:
             default ['ISO3', 'name_short', 'continent']
 
             additional names available:
@@ -43,15 +42,10 @@ def _get_country_dict(keys: Optional['list'] = ['ISO3', 'name_short', 'continent
             'IMAGE', 'REMIND', 'OECD','EU', 'EU28', 'EU27', 'EU27_2007', 'EU25',
             'EU15', 'EU12', 'EEA','Schengen', 'EURO', 'UN', 'UNmember',
             'obsolete', 'Cecilia2050', 'BRIC','APEC', 'BASIC', 'CIS',
-            'G7', 'G20', 'IEA'
-
-        regex_on: set to True to include regex values
+            'G7', 'G20', 'IEA', 'regex'
     """
 
-    if regex_on:
-        keys.append('regex')
-
-    country_df = (pd.read_csv(coco.COUNTRY_DATA_FILE, sep='\t')[keys]
+    country_df = (pd.read_csv(coco.COUNTRY_DATA_FILE, sep='\t')[columns]
                   .rename(columns={'ISO3': 'iso_code'}))
 
     return country_df
@@ -69,11 +63,11 @@ def get_flourish_map_df(slice_on_column: Optional[str] = None,
     """
 
     geometries = _get_world_geometries()
-    countries = _get_country_dict()
+    country_df = _get_country_df()
 
     df = (pd.DataFrame({'iso_code': geometries.keys()})
           .assign(flourish_geom=lambda d: d.iso_code.map(geometries)))
-    df = pd.merge(df, countries, on='iso_code', how='left')
+    df = pd.merge(df, country_df, on='iso_code', how='left')
 
     if (slice_on_column is not None) & (slice_by_values is not None):
         df = df[df[slice_on_column].isin(slice_by_values)]
