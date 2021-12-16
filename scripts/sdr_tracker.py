@@ -5,7 +5,7 @@ Created on Fri Dec  3 10:30:41 2021
 @author: LucaPicci
 """
 
-from scripts import config
+from scripts import config, utils
 import pandas as pd
 import country_converter as coco
 from typing import Optional
@@ -30,13 +30,14 @@ def __geometry_df() -> pd.DataFrame:
 
     return df
 
-def __country_df(columns: Optional['list'] = ['ISO3', 'name_short', 'continent']) -> pd.DataFrame:
+
+def __country_df(columns: Optional['list'] = ['ISO3', 'continent']) -> pd.DataFrame:
     """
     creates a dataFrame for world country names, codes, regions etc.
         columns:
-            default ['ISO3', 'name_short', 'continent']
+            default ['ISO3', 'continent']
             additional names available:
-            'name_official', 'ISO2','ISOnumeric','UNcode', 'FAOcode', 'GBDcode',
+            'name_short', 'name_official', 'ISO2','ISOnumeric','UNcode', 'FAOcode', 'GBDcode',
             'UNregion', 'EXIO1','EXIO2', 'EXIO3', 'WIOD', 'Eora', 'MESSAGE',
             'IMAGE', 'REMIND', 'OECD','EU', 'EU28', 'EU27', 'EU27_2007', 'EU25',
             'EU15', 'EU12', 'EEA','Schengen', 'EURO', 'UN', 'UNmember',
@@ -45,12 +46,13 @@ def __country_df(columns: Optional['list'] = ['ISO3', 'name_short', 'continent']
     """
 
     df = (pd.read_csv(coco.COUNTRY_DATA_FILE, sep='\t')[columns]
-          .rename(columns={'ISO3': 'iso_code'}))
+          .rename(columns={'ISO3': 'iso_code', 'name_short': 'country'}))
 
     return df
 
-def flourish_map_df(slice_on_column: Optional[str] = None,
-                    slice_by_values: Optional[list] = None) -> pd.DataFrame:
+
+def _flourish_map_df(slice_on_column: Optional[str] = None,
+                     slice_by_values: Optional[list] = None) -> pd.DataFrame:
     """
     creates a fourish map dataframe template
     with country name(s) and geometries
@@ -72,54 +74,87 @@ def flourish_map_df(slice_on_column: Optional[str] = None,
 
     return df
 
+
+def africa_map_template() -> None:
+    """
+    Creates template for a flourish map of Africa
+    with country name and geometry
+        output as dataframe saved to glossaries
+    """
+    template = (_flourish_map_df(slice_on_column='continent',
+                                 slice_by_values=['Africa'])
+                .drop(columns='continent'))
+    template.to_csv(f'{config.paths.glossaries}/map_template.csv',
+                    index=False)
+
+
 # ==============================================================================
 # SDR Map Build
 # ==============================================================================
 
-def _add_source_html(sdr_df:pd.DataFrame, sources:pd.DataFrame) -> pd.DataFrame:
+def read_sheet(grid_number: int) -> pd.DataFrame:
+    """
+    """
+    url = ('https://docs.google.com/spreadsheets/d/e/2PACX-1vQZWRGU2EljGEXRFhjGYLq8s2YnxMGQsk3aNfC3I'
+           '_-yuFPJaec7aSZCUxPnTe3hlOW4o4JtBtPLFbhu/pub?'f'gid={grid_number}&single=true&output=csv')
+    try:
+        return pd.read_csv(url)
+    except:
+        raise ConnectionError('Could not read sheet')
+
+
+def _add_source_html(sdr_df: pd.DataFrame, sources: pd.DataFrame) -> pd.DataFrame:
     """
     creates an html string for sources and adds it to a dataframe
     """
-    sdr_df['sources'] = np.nan
+    sdr_df['source_html'] = np.nan
     for iso in sources.iso_code.unique():
-        if len(sources[sources.iso_code == iso])>0:
+        if len(sources[sources.iso_code == iso]) > 0:
             iso_string = '<p><strong>Sources</strong></p>'
             for i in sources[sources.iso_code == iso].index:
                 source = sources.loc[i, 'sources']
                 link = sources.loc[i, 'link']
                 iso_string += f'<p><a href="{link}" target="_blank">{source}</a></p>'
-            sdr_df.loc[sdr_df.iso_code == iso, 'sources'] = iso_string
+            sdr_df.loc[sdr_df.iso_code == iso, 'source_html'] = iso_string
 
     return sdr_df
 
-def create_sdr(map_template:pd.DataFrame,
-               sdr_df:pd.DataFrame,
-               sources_df:pd.DataFrame) -> pd.DataFrame:
+
+def popup_html(sdr_df:pd.DataFrame) -> pd.DataFrame:
+    """
+    """
+    pass
+
+
+
+def create_sdr() -> None:
     """
     creates a csv for flourish map
     """
+    map_template = pd.read_csv(f'{config.paths.glossaries}/map_template.csv')
+    sdr_df = read_sheet(0)
+    sources_df = read_sheet(1174650744)
+
     df = pd.merge(map_template, sdr_df, how='left', on='iso_code')
     df = _add_source_html(df, sources_df)
 
+    df['sdrs_received_usd'] = utils.clean_numeric_column(df['sdrs_received_usd'])
+
+    df = utils.add_pct_gdp(df, columns=['sdrs_received_usd'],
+                           gdp_year=2021, weo_year=2021, weo_release=2)
+
+    df.to_csv(f'{config.paths.output}/sdr.csv',
+              index=False)
+
     return df
-
-
 
 
 
 if __name__ == '__main__':
 
     # create map template for Africa
-    template = flourish_map_df(slice_on_column='continent',
-                               slice_by_values=['Africa'])
-    template.to_csv(f'{config.paths.glossaries}/map_template.csv',
-                    index=False)
+    africa_map_template()
 
     # create flourish csv
-    map_template = pd.read_csv(f'{config.paths.glossaries}/map_template.csv')
-    sdr_df = pd.read_csv(f'{config.paths.glossaries}/sdr.csv')
-    sources_df = pd.read_csv(f'{config.paths.glossaries}/sources.csv')
-
-    df = create_sdr(map_template, sdr_df, sources_df)
-    df.to_csv(f'{config.paths.output}/sdr.csv',
-              index=False)
+    create_sdr()
+    print('successfully created map')
