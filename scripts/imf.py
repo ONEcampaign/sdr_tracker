@@ -129,7 +129,6 @@ def __query_imf(url:str) -> dict:
         except:
             counter += 1
             
-    print(f'Could not get: {url}')
         
 
 def _imf_to_df(json:list) -> pd.DataFrame:

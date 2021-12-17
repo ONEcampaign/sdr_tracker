@@ -92,6 +92,7 @@ def get_holdings(indicator, title, year_month:Optional[str] = None):
     
     africa = utils.country_df(columns = ['ISO3', 'ISO2', 'continent'])
     africa = africa[africa.continent == 'Africa']
+    africa.loc[africa.iso_code == 'NAM', 'ISO2'] = 'NA'
     africa = africa.dropna(subset = ['ISO2'])
     
     df = imf.get_imf_indicator(country_list = list(africa.ISO2),
@@ -188,12 +189,12 @@ def create_sdr_map() -> None:
     df = pd.merge(df, sdr_holding_usd, how='left', on = 'iso_code')
     
     
-    #RAFASDR_XDR - SDR Holding
+   
     
     df.to_csv(f'{config.paths.output}/sdr.csv',
               index=False)
 
-    return df
+
 
 
 
@@ -209,8 +210,8 @@ if __name__ == '__main__':
     pass
 
     # create map template for Africa
-   # africa_map_template()
+    africa_map_template()
 
     # create flourish csv
-   # create_sdr_map()
-   # print('successfully created map')
+    create_sdr_map()
+    print('successfully created map')
