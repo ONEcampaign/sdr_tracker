@@ -17,7 +17,6 @@ def _download_weo(year: int,
                      release=release,
                      directory=config.paths.glossaries,
                      filename=f"weo_{year}_{release}.csv")
-        print('successfully downloaded')
     except:
         raise ConnectionError('Could not download weo data')
 
