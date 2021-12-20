@@ -170,7 +170,7 @@ def get_imf_indicator(country_list:list,
         except:
             pass
                            
-    
+    print(f'Successfully downloaded {indicator}')
     return df
 
 

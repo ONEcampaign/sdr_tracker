@@ -16,8 +16,10 @@ def add_pct_gdp(df:pd.DataFrame,
 
     gdp_df = imf.get_gdp(gdp_year, weo_year, weo_release)
     df = pd.merge(df, gdp_df, on='iso_code', how='left')
+    
     for column in columns:
-        df[f'{column}_pct_gdp'] = (df.loc[:, column]/df.loc[:, 'gdp'])*100
+        df[f'{column}_pct_gdp'] = (df[column]/(df['gdp']/1000000))*100
+    df.drop(columns='gdp', inplace=True)
 
     return df
 

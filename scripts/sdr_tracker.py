@@ -31,6 +31,7 @@ def __geometry_df() -> pd.DataFrame:
 
     return df
 
+
 def _flourish_map_df(slice_on_column: Optional[str] = None,
                      slice_by_values: Optional[list] = None) -> pd.DataFrame:
     """
@@ -68,53 +69,45 @@ def africa_map_template() -> None:
                     index=False)
 
 
-
 # ============================================================================
 # Get SDR Holdings and allocation from IMF
 # ============================================================================
-#HSA_XDR - SDR allocation
-#HSA_USD
-#RAFASDR_XDR - SDR Holding
 
-def _clean_holdings(df:pd.DataFrame, indicator, title):
+def _clean_holdings(df: pd.DataFrame, title):
     ''' '''
     df['REF_AREA'] = coco.convert(df['REF_AREA'])
     df = df[['TIME_PERIOD', 'OBS_VALUE', 'REF_AREA']]
-    df = df.pivot(index='REF_AREA', columns = 'TIME_PERIOD', values = 'OBS_VALUE')
-    df.columns = df.columns + f'_{title}'
+    date = df.TIME_PERIOD.unique()[0]
+    df = df.pivot(index='REF_AREA', columns='TIME_PERIOD', values='OBS_VALUE')
     df = df.reset_index(drop=False)
-    df.rename(columns = {'REF_AREA':'iso_code'}, inplace=True)
-    
+    df.rename(columns={'REF_AREA': 'iso_code', f'{date}': title}, inplace=True)
+    df[f'{title}_date'] = date
+    df[title] = pd.to_numeric(df[title])
+
     return df
 
-def get_holdings(indicator, title, year_month:Optional[str] = None):
+
+def get_holdings(indicator, title, year_month: Optional[str] = None):
     ''' '''
-    
-    africa = utils.country_df(columns = ['ISO3', 'ISO2', 'continent'])
+
+    africa = utils.country_df(columns=['ISO3', 'ISO2', 'continent'])
     africa = africa[africa.continent == 'Africa']
     africa.loc[africa.iso_code == 'NAM', 'ISO2'] = 'NA'
-    africa = africa.dropna(subset = ['ISO2'])
-    
-    df = imf.get_imf_indicator(country_list = list(africa.ISO2),
-                          database = 'IFS',
-                          frequency = 'M',
-                          indicator = indicator)
-    
+    africa = africa.dropna(subset=['ISO2'])
+
+    df = imf.get_imf_indicator(country_list=list(africa.ISO2),
+                               database='IFS',
+                               frequency='M',
+                               indicator=indicator,
+                               start_period = '2021-08')
+
     if year_month is None:
         df = df.loc[df.TIME_PERIOD == df.TIME_PERIOD.max()]
     else:
         df = df.loc[df.TIME_PERIOD == year_month]
-        
-    df = _clean_holdings(df, indicator, title)
-    
-        
+    df = _clean_holdings(df, title)
+
     return df
-
-
-    
-
-
-
 
 
 # ============================================================================
@@ -131,6 +124,22 @@ def read_sheet(grid_number: int) -> pd.DataFrame:
     except:
         raise ConnectionError('Could not read sheet')
 
+def _add_holdings_allocation(df: pd.DataFrame) -> pd.DataFrame:
+    """ """
+    cumulative_allocation_sdr = get_holdings('HSA_XDR', 'sdr_allocation_sdr_millions')
+    df = pd.merge(df, cumulative_allocation_sdr, how='left', on='iso_code')
+
+    cumulative_allocation_usd = get_holdings('HSA_USD', 'sdr_allocation_usd_millions')
+    df = pd.merge(df, cumulative_allocation_usd, how='left', on='iso_code')
+
+    sdr_holding_sdr = get_holdings('RAFASDR_XDR', 'sdr_holdings_sdr_millions')
+    df = pd.merge(df, sdr_holding_sdr, how='left', on='iso_code')
+
+    sdr_holding_usd = get_holdings('RAFASDR_USD', 'sdr_holdings_usd_millions')
+    df = pd.merge(df, sdr_holding_usd, how='left', on='iso_code')
+
+    return df
+
 
 def _add_source_html(sdr_df: pd.DataFrame, sources: pd.DataFrame) -> pd.DataFrame:
     """
@@ -139,7 +148,7 @@ def _add_source_html(sdr_df: pd.DataFrame, sources: pd.DataFrame) -> pd.DataFram
     sdr_df['source_html'] = np.nan
     for iso in sources.iso_code.unique():
         if len(sources[sources.iso_code == iso]) > 0:
-            iso_string = '<p><strong>Sources</strong></p>'
+            iso_string = '<p><strong>References</strong></p><br>'
             for i in sources[sources.iso_code == iso].index:
                 source = sources.loc[i, 'sources']
                 link = sources.loc[i, 'link']
@@ -149,65 +158,96 @@ def _add_source_html(sdr_df: pd.DataFrame, sources: pd.DataFrame) -> pd.DataFram
     return sdr_df
 
 
-def popup_html(sdr_df:pd.DataFrame) -> pd.DataFrame:
+def _add_sdr_table(df: pd.DataFrame) -> pd.DataFrame:
+    """ """
+
+    df['sdr_table'] = np.nan
+    for i in df.index:
+        allocation_aug_usd = round((df.loc[i, 'sdrs_allocation_aug_23_usd']), 2)
+        allocation_aug_sdr = round((df.loc[i, 'sdrs_allocation_aug_23_sdr']), 2)
+        allocation_aug_gdp = round(df.loc[i, 'sdrs_allocation_aug_23_usd_pct_gdp'], 2)
+       # allocation_aug_gdp = 0
+        allocation_aug_html = f'<tr><td>SDR allocations on August 23, 2021</td><td>{allocation_aug_usd}</td><td>{allocation_aug_sdr}</td><td>{allocation_aug_gdp}</td></tr>'
+        
+        allocation_usd = round(df.loc[i, 'sdr_allocation_usd_millions'], 2)
+        allocation_sdr = round(df.loc[i, 'sdr_allocation_sdr_millions'], 2)
+        allocation_date = df.loc[i, 'sdr_allocation_usd_millions_date']
+        allocation_gdp = round(df.loc[i, 'sdr_allocation_usd_millions_pct_gdp'], 2)
+        #allocation_gdp = 0
+        allocation_html = f'<tr><td>SDR allocations as of {allocation_date}</td><td>{allocation_usd}</td><td>{allocation_sdr}</td><td>{allocation_gdp}</td></tr>'
+        
+        holdings_usd = round(df.loc[i, 'sdr_holdings_usd_millions'], 2)
+        holdings_sdr = round(df.loc[i, 'sdr_holdings_sdr_millions'], 2)
+        holdings_date = df.loc[i, 'sdr_holdings_sdr_millions_date']
+        holdings_gdp = round(df.loc[i, 'sdr_holdings_usd_millions_pct_gdp'], 2)
+        #holdings_gdp = 0
+        holding_html = f'<tr><td>SDR holdings as of {holdings_date}</td><td>{holdings_usd}</td><td>{holdings_sdr}</td><td>{holdings_gdp}</td></tr>'
+
+        table = f'<table><tr><th></th><th>USD millions</th><th>SDR millions</th><th>SDR as % of GDP</th></tr>{allocation_aug_html}{allocation_html}{holding_html} </table>'
+        df.loc[i, 'sdr_table'] = table
+
+    return df
+
+def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
     """
     """
-    pass
-
-
+    df['popup_html'] = np.nan
+    for i in df.index:
+        allocation = round(df.loc[i, 'sdr_allocation_usd_millions'], 2)
+        holding = round(df.loc[i, 'sdr_holdings_usd_millions'], 2)
+        date = df.loc[i, 'sdr_holdings_sdr_millions_date']
+        
+        popup = f'<p>SDR allocations: {allocation} USD millions</p><p>SDR holdings: {holding} USD millions</p><p> as of {date}</p>'
+        df.loc[i, 'popup_html'] = popup
+        
+    return df
+        
 
 
 def create_sdr_map() -> None:
     """
     creates a csv for flourish map
     """
+    #get files
     map_template = pd.read_csv(f'{config.paths.glossaries}/map_template.csv')
     sdr_df = read_sheet(0)
     sources_df = read_sheet(1174650744)
 
+    #merge sdr from google with map template
     df = pd.merge(map_template, sdr_df, how='left', on='iso_code')
-    df = _add_source_html(df, sources_df)
+    df['sdrs_allocation_aug_23_usd'] = utils.clean_numeric_column(df['sdrs_allocation_aug_23_usd'])/1000000
+    df['sdrs_allocation_aug_23_sdr'] = utils.clean_numeric_column(df['sdrs_allocation_aug_23_sdr'])/1000000
+    df = df.dropna(subset=['country'])
 
-    df['sdrs_allocation_aug_23_usd'] = utils.clean_numeric_column(df['sdrs_allocation_aug_23_usd'])
 
 
-    df = utils.add_pct_gdp(df, columns=['sdrs_allocation_aug_23_usd'],
+    
+    df = _add_holdings_allocation(df)
+    #add pct_gdp
+    columns_for_gdp = ['sdrs_allocation_aug_23_usd',
+                       'sdr_allocation_usd_millions',
+                       'sdr_holdings_usd_millions']
+    
+    df = utils.add_pct_gdp(df, columns=columns_for_gdp,
                            gdp_year=2021, weo_year=2021, weo_release=2)
     
-    
-    #add holdings
-    cumulative_allocation_sdr = get_holdings('HSA_XDR', 'sdr_allocation_sdr_millions')
-    df = pd.merge(df, cumulative_allocation_sdr, how='left', on = 'iso_code')
-    
-    cumulative_allocation_usd = get_holdings('HSA_USD', 'sdr_allocation_usd_millions')
-    df = pd.merge(df, cumulative_allocation_usd, how='left', on = 'iso_code')
-    
-    sdr_holding_sdr = get_holdings('RAFASDR_XDR', 'sdr_holdings_sdr_millions')
-    df = pd.merge(df, sdr_holding_sdr, how='left', on = 'iso_code')
-    
-    sdr_holding_usd = get_holdings('RAFASDR_USD', 'sdr_holdings_usd_millions')
-    df = pd.merge(df, sdr_holding_usd, how='left', on = 'iso_code')
-    
+    #add html for popups and panels
+    df = _add_sdr_table(df)
+    df = _add_source_html(df, sources_df)
+    df = _add_popup_html(df)
     
    
-    
+    #export
+    df = df[['iso_code', 'flourish_geom', 'region', 'country', 'text', 
+             'sdr_holdings_usd_millions_pct_gdp', 'sdr_holdings_sdr_millions',
+             'sdr_allocation_sdr_millions',
+             'sdr_allocation_usd_millions_pct_gdp', 'sdr_table', 'source_html', 'popup_html']]
     df.to_csv(f'{config.paths.output}/sdr.csv',
               index=False)
 
 
-
-
-
-
-    
-    
-    
-
-
-
-
 if __name__ == '__main__':
-    pass
+    
 
     # create map template for Africa
     africa_map_template()
