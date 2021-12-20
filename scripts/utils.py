@@ -3,7 +3,7 @@ import weo
 import pandas as pd
 from typing import Optional
 import country_converter as coco
-
+import time
 
 def add_pct_gdp(df:pd.DataFrame,
                 columns:list,
@@ -54,3 +54,20 @@ def country_df(columns: Optional['list'] = ['ISO3', 'continent'],
           .rename(columns={'ISO3': 'iso_code', 'name_short': 'country'}))
 
     return df
+
+def time_script(func):
+    '''Decorator to time script'''
+    
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        func()
+        end = time.perf_counter()
+        elapsed = round((end-start)/60, 2)
+        print(f'Time elapsed: {elapsed} min')
+        
+    return wrapper
+    
+    
+    
+    
+    
