@@ -21,15 +21,17 @@ def __geometry_df() -> pd.DataFrame:
     """
     return a dataframe with iso_code and flourish geometries
     """
+    # Read in the geometries
     g = pd.read_json(config.paths.glossaries + r'/flourish_geometries_world.json')
-    g.columns = ['geo', 'iso_code']
-    g = g.iloc[1:]
-    g = g.drop_duplicates(subset=['iso_code'], keep='first')
-    g = g.set_index('iso_code').T.to_dict('records')[0]
-    df = (pd.DataFrame({'iso_code': g.keys()})
-          .assign(flourish_geom=lambda d: d.iso_code.map(g)))
 
-    return df
+    return (g
+          .rename(columns={g.columns[0]:'flourish_geom',g.columns[1]:'iso_code'})
+          .iloc[1:]
+          .drop_duplicates(subset='iso_code', keep='first')
+          .filter(['iso_code', 'flourish_geom'], axis=1)
+          .reset_index(drop=True)
+          )
+
 
 
 def _flourish_map_df(slice_on_column: Optional[str] = None,
