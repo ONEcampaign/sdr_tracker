@@ -20,7 +20,7 @@ def add_pct_gdp(
 
     for column in columns:
         # Divide GDP by a million and multiply by 100 to get a percentage
-        df[f"{column}_pct_gdp"] = df[column] / (df["gdp"] / 1_000)
+        df[f"{column}_pct_gdp"] = 100 * df[column] / (df["gdp"] / 1e6)
 
     df.drop(columns="gdp", inplace=True)
 
@@ -68,7 +68,7 @@ def time_script(func):
     return wrapper
 
 
-def africa_list(code_type:str = 'ISO3'):
+def africa_list(code_type: str = "ISO3"):
     """Return list of African countries"""
 
     df = (
@@ -76,9 +76,9 @@ def africa_list(code_type:str = 'ISO3'):
         .loc[lambda d: d.continent == "Africa"]
         .fillna("NA")
         .dropna(subset=["ISO2"])
-        .drop_duplicates('ISO2')
+        .drop_duplicates("ISO2")
     )
-    if code_type == 'ISO3':
+    if code_type == "ISO3":
         return df.iso_code.tolist()
-    elif code_type == 'ISO2':
+    elif code_type == "ISO2":
         return df.ISO2.tolist()
