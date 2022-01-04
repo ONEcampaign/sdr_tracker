@@ -60,7 +60,7 @@ def __clean_holdings(df: pd.DataFrame, title: str):
     return (
         df.assign(iso_code=lambda d: coco.convert(d.REF_AREA))
         .filter(["TIME_PERIOD", "OBS_VALUE", "iso_code"], axis=1)
-        .rename(columns={f"OBS_VALUE": title, "TIME_PERIOD": f"{title}_date",})
+        .rename(columns={f"OBS_VALUE": title, "TIME_PERIOD": f"{title}_date"})
         .astype({f"{title}": "float64"})
         .round({title: 2})
     )
@@ -274,6 +274,11 @@ def create_sdr_map() -> None:
         },
         inplace=True,
     )
+
+    # Rounding
+    df["sdrs_allocation_aug_23_usd"] = round(df["sdrs_allocation_aug_23_usd"], 2)
+    df["sdrs_allocation_aug_23_sdr"] = round(df["sdrs_allocation_aug_23_sdr"], 2)
+    df["sdrs_allocation_aug_23_pct_gdp"] = round(df["sdrs_allocation_aug_23_pct_gdp"], 2)
 
     # add holdings and allocation
     df = add_holdings_allocation(df)
