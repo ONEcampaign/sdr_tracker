@@ -238,6 +238,19 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _fix_nulls(df:pd.DataFrame) -> pd.DataFrame:
+    """
+    Fixes text for popup and panel for countries where there is no data available
+    """
+    message = '<p>No data available</p>'
+    condition = (df.text.isna()
+                 &df.sdrs_allocation_aug_23_sdr.isna()
+                 &df.sdr_holdings_sdr_millions.isna()
+                 &df.sdr_allocation_sdr_millions.isna())
+    df.loc[condition, ['popup_html', 'sdr_table']] = message
+    return df
+
+
 @utils.time_script
 def create_sdr_map() -> None:
     """
@@ -287,6 +300,8 @@ def create_sdr_map() -> None:
     df = _add_sdr_table(df)
     df = _add_source_html(df, sources_df)
     df = _add_popup_html(df)
+
+    df = _fix_nulls(df)
 
     # export
     df = df[
