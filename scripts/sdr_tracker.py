@@ -176,7 +176,7 @@ def _add_sdr_table(df: pd.DataFrame) -> pd.DataFrame:
         allocation_aug_gdp = df.loc[i, "sdrs_allocation_aug_23_pct_gdp"]
 
         allocation_aug_html = (
-            f"<tr><td>SDR allocations on August 23, 2021</td>"
+            f"<tr><td>SDR allocations on August 23, 2021<sup>*</sup></td>"
             f"<td>{allocation_aug_usd}</td><td>{allocation_aug_sdr}"
             f"</td><td>{allocation_aug_gdp}</td></tr>"
         )
@@ -210,6 +210,8 @@ def _add_sdr_table(df: pd.DataFrame) -> pd.DataFrame:
             f"<table><tr><th></th><th>USD millions</th>"
             f"<th>SDR millions</th><th>SDR as % of GDP</th>"
             f"</tr>{allocation_aug_html}{allocation_html}{holding_html} </table>"
+            "<br><p><i><sup>*</sup>SDR values for August 23, 2021 calculated using exchange rate from August 23</i></p>"
+            "<p><i>1 USD: 0.705 SDRs</i></p>"
         )
 
         df.loc[i, "sdr_table"] = table
@@ -228,9 +230,10 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
         date = df.loc[i, "sdr_holdings_sdr_millions_date"]
 
         popup = (
-            f"<p>SDR allocations: {allocation} USD millions</p>"
-            f"<p>SDR holdings: {holding} USD millions</p>"
-            f"<p> as of {date}</p>"
+            f"<br><p>SDR allocations:  {allocation} USD millions</p>"
+            f"<p>SDR holdings:      {holding} USD millions</p>"
+            f'<p style="text-align:right;"><i> as of {date}</i></p>'
+            "<br><p><strong>Click for more information</strong></p>"
         )
 
         df.loc[i, "popup_html"] = popup
@@ -239,9 +242,8 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _fix_nulls(df:pd.DataFrame) -> pd.DataFrame:
-    """
-    Fixes text for popup and panel for countries where there is no data available
-    """
+    """Fixes text for popup and panel for countries where there is no data available"""
+
     message = '<p>No data available</p>'
     condition = (df.text.isna()
                  &df.sdrs_allocation_aug_23_sdr.isna()
@@ -253,9 +255,8 @@ def _fix_nulls(df:pd.DataFrame) -> pd.DataFrame:
 
 @utils.time_script
 def create_sdr_map() -> None:
-    """
-    creates a csv for flourish map
-    """
+    """creates a csv for flourish map"""
+
     # get files
     map_template = pd.read_csv(f"{config.paths.glossaries}/map_template.csv")
     sdr_df = read_sheet(0)
@@ -266,10 +267,12 @@ def create_sdr_map() -> None:
 
     # Clean DF
     df["sdrs_allocation_aug_23_usd"] = (
-        utils.clean_numeric_column(df["sdrs_allocation_aug_23_usd"]) / 1e6
+        round(
+            utils.clean_numeric_column(df["sdrs_allocation_aug_23_usd"]) / 1e6, 2)
     )
     df["sdrs_allocation_aug_23_sdr"] = (
-        utils.clean_numeric_column(df["sdrs_allocation_aug_23_sdr"]) / 1e6
+        round(
+            utils.clean_numeric_column(df["sdrs_allocation_aug_23_sdr"]) / 1e6, 2)
     )
     df = df.dropna(subset=["country"])
 
@@ -287,11 +290,6 @@ def create_sdr_map() -> None:
         },
         inplace=True,
     )
-
-    # Rounding
-    df["sdrs_allocation_aug_23_usd"] = round(df["sdrs_allocation_aug_23_usd"], 2)
-    df["sdrs_allocation_aug_23_sdr"] = round(df["sdrs_allocation_aug_23_sdr"], 2)
-    df["sdrs_allocation_aug_23_pct_gdp"] = round(df["sdrs_allocation_aug_23_pct_gdp"], 2)
 
     # add holdings and allocation
     df = add_holdings_allocation(df)
