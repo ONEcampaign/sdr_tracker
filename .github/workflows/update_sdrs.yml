@@ -21,7 +21,7 @@ jobs:
           pip install -r requirements.txt
       - name: execute script
         run:
-          python ./scripts/sdr_tracker.py
+          python update.py
       - name: save-changes
         run:  |
           git config --local user.email "action@github.com"
