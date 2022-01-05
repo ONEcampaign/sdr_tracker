@@ -1,5 +1,0 @@
-pandas
-numpy
-country_converter
-requests
-weo
