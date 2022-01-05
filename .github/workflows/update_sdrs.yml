@@ -20,8 +20,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: execute script
+        working-directory: scripts
         run:
-          scripts/sdr_tracker.py
+          sdr_tracker.py
       - name: save-changes
         run:  |
           git config --local user.email "action@github.com"
