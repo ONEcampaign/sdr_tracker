@@ -60,7 +60,7 @@ def __clean_holdings(df: pd.DataFrame, title: str):
     return (
         df.assign(iso_code=lambda d: coco.convert(d.REF_AREA))
         .filter(["TIME_PERIOD", "OBS_VALUE", "iso_code"], axis=1)
-        .rename(columns={f"OBS_VALUE": title, "TIME_PERIOD": f"{title}_date",})
+        .rename(columns={f"OBS_VALUE": title, "TIME_PERIOD": f"{title}_date"})
         .astype({f"{title}": "float64"})
         .round({title: 2})
     )
@@ -176,9 +176,10 @@ def _add_sdr_table(df: pd.DataFrame) -> pd.DataFrame:
         allocation_aug_gdp = df.loc[i, "sdrs_allocation_aug_23_pct_gdp"]
 
         allocation_aug_html = (
-            f"<tr><td>SDR allocations on August 23, 2021</td>"
-            f"<td>{allocation_aug_usd}</td><td>{allocation_aug_sdr}"
-            f"</td><td>{allocation_aug_gdp}</td></tr>"
+            f'<tr><td style="text-align:left">SDR allocations on August 23, 2021</td>'
+            f'<td style="text-align:center">{allocation_aug_usd}<sup>*</sup></td>'
+            f'<td style="text-align:center">{allocation_aug_sdr}'
+            f'</td><td style="text-align:center">{allocation_aug_gdp}</td></tr>'
         )
 
         # Current allocations
@@ -188,9 +189,10 @@ def _add_sdr_table(df: pd.DataFrame) -> pd.DataFrame:
         allocation_gdp = df.loc[i, "sdr_allocation_pct_gdp"]
 
         allocation_html = (
-            f"<tr><td>SDR allocations as of {allocation_date}</td>"
-            f"<td>{allocation_usd}</td><td>{allocation_sdr}</td>"
-            f"<td>{allocation_gdp}</td></tr>"
+            f'<tr><td style="text-align:left">Cumulative SDR allocations as of {allocation_date}</td>'
+            f'<td style="text-align:center">{allocation_usd}</td>'
+            f'<td style="text-align:center">{allocation_sdr}</td>'
+            f'<td style="text-align:center">{allocation_gdp}</td></tr>'
         )
 
         # Current holdings
@@ -200,16 +202,20 @@ def _add_sdr_table(df: pd.DataFrame) -> pd.DataFrame:
         holdings_gdp = df.loc[i, "sdr_holdings_pct_gdp"]
 
         holding_html = (
-            f"<tr><td>SDR holdings as of {holdings_date}</td>"
-            f"<td>{holdings_usd}</td><td>{holdings_sdr}</td>"
-            f"<td>{holdings_gdp}</td></tr>"
+            f'<tr><td style="text-align:left">Current SDR holdings as of {holdings_date}</td>'
+            f'<td style="text-align:center">{holdings_usd}</td>'
+            f'<td style="text-align:center">{holdings_sdr}</td>'
+            f'<td style="text-align:center">{holdings_gdp}</td></tr>'
         )
 
         # SDR holdings Table
         table = (
-            f"<table><tr><th></th><th>USD millions</th>"
-            f"<th>SDR millions</th><th>SDR as % of GDP</th>"
+            f'<table><tr><th></th><th style="text-align:center">USD millions</th>'
+            f'<th style="text-align:center">SDR millions</th>'
+            f'<th style="text-align:center">SDR as % of GDP</th>'
             f"</tr>{allocation_aug_html}{allocation_html}{holding_html} </table>"
+            "<br><p><i><sup>*</sup>SDR values for August 23, 2021 calculated using exchange rate from August 23</i></p>"
+            "<p><i>1 USD: 0.705 SDRs</i></p>"
         )
 
         df.loc[i, "sdr_table"] = table
@@ -223,14 +229,21 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
     df["popup_html"] = np.nan
 
     for i in df.index:
+        aug_allocation = df.loc[i, "sdrs_allocation_aug_23_usd"]
         allocation = df.loc[i, "sdr_allocation_usd_millions"]
         holding = df.loc[i, "sdr_holdings_usd_millions"]
         date = df.loc[i, "sdr_holdings_sdr_millions_date"]
 
         popup = (
-            f"<p>SDR allocations: {allocation} USD millions</p>"
-            f"<p>SDR holdings: {holding} USD millions</p>"
-            f"<p> as of {date}</p>"
+            '<br><p style="text-align:left;">SDR allocation: '
+            f'<span style="float:right;">{aug_allocation} USD millions</span></p>'
+            '<p style="text-align:right;"><i>on August 23, 2021</i></p><br>'
+            '<p style="text-align:left;">Cumulative SDR allocations:'
+            f'<span style="float:right;">&ensp;{allocation} USD millions</span></p>'
+            '<p style="text-align:left;">Current SDR holdings: ' 
+            f'<span style="float:right;">{holding} USD millions</span></p>'
+            f'<p style="text-align:right;"><i> as of {date}</i></p>'
+            "<br><p><strong>Click for more information</strong></p>"
         )
 
         df.loc[i, "popup_html"] = popup
@@ -238,11 +251,22 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _fix_nulls(df:pd.DataFrame) -> pd.DataFrame:
+    """Fixes text for popup and panel for countries where there is no data available"""
+
+    message = '<br><p>No data available</p>'
+    condition = (df.text.isna()
+                 &df.sdrs_allocation_aug_23_sdr.isna()
+                 &df.sdr_holdings_sdr_millions.isna()
+                 &df.sdr_allocation_sdr_millions.isna())
+    df.loc[condition, ['popup_html', 'sdr_table']] = message
+    return df
+
+
 @utils.time_script
 def create_sdr_map() -> None:
-    """
-    creates a csv for flourish map
-    """
+    """creates a csv for flourish map"""
+
     # get files
     map_template = pd.read_csv(f"{config.paths.glossaries}/map_template.csv")
     sdr_df = read_sheet(0)
@@ -253,10 +277,12 @@ def create_sdr_map() -> None:
 
     # Clean DF
     df["sdrs_allocation_aug_23_usd"] = (
-        utils.clean_numeric_column(df["sdrs_allocation_aug_23_usd"]) / 1e6
+        round(
+            utils.clean_numeric_column(df["sdrs_allocation_aug_23_usd"]) / 1e6, 2)
     )
     df["sdrs_allocation_aug_23_sdr"] = (
-        utils.clean_numeric_column(df["sdrs_allocation_aug_23_sdr"]) / 1e6
+        round(
+            utils.clean_numeric_column(df["sdrs_allocation_aug_23_sdr"]) / 1e6, 2)
     )
     df = df.dropna(subset=["country"])
 
@@ -283,6 +309,8 @@ def create_sdr_map() -> None:
     df = _add_source_html(df, sources_df)
     df = _add_popup_html(df)
 
+    df = _fix_nulls(df)
+
     # export
     df = df[
         [
@@ -291,6 +319,9 @@ def create_sdr_map() -> None:
             "region",
             "country",
             "text",
+            "sdrs_allocation_aug_23_sdr",
+            "sdrs_allocation_aug_23_usd",
+            "sdrs_allocation_aug_23_pct_gdp",
             "sdr_holdings_pct_gdp",
             "sdr_holdings_sdr_millions",
             "sdr_allocation_sdr_millions",
