@@ -91,7 +91,7 @@ def __create_url(
     start_period: Optional[str] = None,
     end_period: Optional[str] = None,
 ) -> str:
-    """ 
+    """
     creates a url to query the IMF api using the CompactData method
         country_list: list of iso2 codes
     """
@@ -101,16 +101,16 @@ def __create_url(
     key = f"{database}/{frequency}"
     # add countries
     if country is not None:
-        key = f'{key}.{country}'
+        key = f"{key}.{country}"
     # add sector
     if sector is not None:
-        key = f'{key}.{sector}'
+        key = f"{key}.{sector}"
     # add unit
     if units is not None:
-        key = f'{key}.{units}'
+        key = f"{key}.{units}"
     # add indicator
     if indicator is not None:
-        key = f'{key}.{indicator}'
+        key = f"{key}.{indicator}"
 
     # add time
     if (start_period is not None) & (end_period is not None):

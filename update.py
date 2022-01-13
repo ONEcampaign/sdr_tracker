@@ -1,6 +1,6 @@
 from scripts import sdr_tracker
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # create map template for Africa
     sdr_tracker.create_africa_map_template()
 

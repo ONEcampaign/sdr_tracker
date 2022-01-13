@@ -135,7 +135,7 @@ def add_holdings_allocation(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def read_sheet(grid_number: int) -> pd.DataFrame:
-    """ Reads a google sheet to a dataframe"""
+    """Reads a google sheet to a dataframe"""
 
     url = (
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZWRGU2EljGEXRFhjGYLq8s2Yn"
@@ -240,7 +240,7 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
             '<p style="text-align:right;"><i>on August 23, 2021</i></p><br>'
             '<p style="text-align:left;">Cumulative SDR allocations:'
             f'<span style="float:right;">&ensp;{allocation} USD millions</span></p>'
-            '<p style="text-align:left;">Current SDR holdings: ' 
+            '<p style="text-align:left;">Current SDR holdings: '
             f'<span style="float:right;">{holding} USD millions</span></p>'
             f'<p style="text-align:right;"><i> as of {date}</i></p>'
             "<br><p><strong>Click for more information</strong></p>"
@@ -251,15 +251,17 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _fix_nulls(df:pd.DataFrame) -> pd.DataFrame:
+def _fix_nulls(df: pd.DataFrame) -> pd.DataFrame:
     """Fixes text for popup and panel for countries where there is no data available"""
 
-    message = '<br><p>No data available</p>'
-    condition = (df.text.isna()
-                 &df.sdrs_allocation_aug_23_sdr.isna()
-                 &df.sdr_holdings_sdr_millions.isna()
-                 &df.sdr_allocation_sdr_millions.isna())
-    df.loc[condition, ['popup_html', 'sdr_table']] = message
+    message = "<br><p>No data available</p>"
+    condition = (
+        df.text.isna()
+        & df.sdrs_allocation_aug_23_sdr.isna()
+        & df.sdr_holdings_sdr_millions.isna()
+        & df.sdr_allocation_sdr_millions.isna()
+    )
+    df.loc[condition, ["popup_html", "sdr_table"]] = message
     return df
 
 
@@ -276,13 +278,11 @@ def create_sdr_map() -> None:
     df = pd.merge(map_template, sdr_df, how="left", on="iso_code")
 
     # Clean DF
-    df["sdrs_allocation_aug_23_usd"] = (
-        round(
-            utils.clean_numeric_column(df["sdrs_allocation_aug_23_usd"]) / 1e6, 2)
+    df["sdrs_allocation_aug_23_usd"] = round(
+        utils.clean_numeric_column(df["sdrs_allocation_aug_23_usd"]) / 1e6, 2
     )
-    df["sdrs_allocation_aug_23_sdr"] = (
-        round(
-            utils.clean_numeric_column(df["sdrs_allocation_aug_23_sdr"]) / 1e6, 2)
+    df["sdrs_allocation_aug_23_sdr"] = round(
+        utils.clean_numeric_column(df["sdrs_allocation_aug_23_sdr"]) / 1e6, 2
     )
     df = df.dropna(subset=["country"])
 

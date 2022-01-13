@@ -20,7 +20,7 @@ def add_pct_gdp(
 
     for column in columns:
         # Divide GDP by a million and multiply by 100 to get a percentage
-        df[f"{column}_pct_gdp"] = round(100 * df[column] / (df["gdp"] / 1e6),2)
+        df[f"{column}_pct_gdp"] = round(100 * df[column] / (df["gdp"] / 1e6), 2)
 
     df.drop(columns="gdp", inplace=True)
 
