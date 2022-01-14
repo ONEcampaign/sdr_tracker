@@ -58,7 +58,7 @@ def __clean_holdings_allocation(df: pd.DataFrame, title: str):
 
     # change date format
     df.TIME_PERIOD = pd.to_datetime(df.TIME_PERIOD)
-    df.TIME_PERIOD = df.TIME_PERIOD.dt.strftime('%b %Y')
+    df.TIME_PERIOD = df.TIME_PERIOD.dt.strftime("%b %Y")
 
     return (
         df.assign(iso_code=lambda d: coco.convert(d.REF_AREA))
@@ -99,10 +99,18 @@ def add_holdings_allocation(df: pd.DataFrame) -> pd.DataFrame:
     """Adds holdings and allocations to the dataframe"""
 
     # Indicators
-    cumulative_allocation_sdr = _get_holdings_allocation("HSA_XDR", "sdr_allocation_sdr_millions")
-    cumulative_allocation_usd = _get_holdings_allocation("HSA_USD", "sdr_allocation_usd_millions")
-    sdr_holding_sdr = _get_holdings_allocation("RAFASDR_XDR", "sdr_holdings_sdr_millions")
-    sdr_holding_usd = _get_holdings_allocation("RAFASDR_USD", "sdr_holdings_usd_millions")
+    cumulative_allocation_sdr = _get_holdings_allocation(
+        "HSA_XDR", "sdr_allocation_sdr_millions"
+    )
+    cumulative_allocation_usd = _get_holdings_allocation(
+        "HSA_USD", "sdr_allocation_usd_millions"
+    )
+    sdr_holding_sdr = _get_holdings_allocation(
+        "RAFASDR_XDR", "sdr_holdings_sdr_millions"
+    )
+    sdr_holding_usd = _get_holdings_allocation(
+        "RAFASDR_USD", "sdr_holdings_usd_millions"
+    )
 
     # Merge indicators to passed dataframe
     for indicator in [
@@ -154,20 +162,22 @@ def read_sheet(grid_number: int) -> pd.DataFrame:
 def __sources(df, source_df, i) -> str:
     """Creates an HTML string for references or returns null if no sources are listed"""
 
-    iso_code = df.loc[i, 'iso_code']
+    iso_code = df.loc[i, "iso_code"]
     if len(source_df[source_df.iso_code == iso_code]) > 0:
         sources = "<br><p><strong>References</strong></p><br>"
         for indx in source_df[source_df.iso_code == iso_code].index:
             source_name = source_df.loc[indx, "sources"]
             source_link = source_df.loc[indx, "link"]
-            sources += f'<p><a href="{source_link}" target="_blank">{source_name}</a></p>'
+            sources += (
+                f'<p><a href="{source_link}" target="_blank">{source_name}</a></p>'
+            )
     else:
         sources = np.nan
 
     return sources
 
 
-def __sdr_table(df: pd.DataFrame, i:int) -> str:
+def __sdr_table(df: pd.DataFrame, i: int) -> str:
     """Creates an HTML string for SDR holdings and allocation"""
 
     # August allocations
@@ -177,7 +187,7 @@ def __sdr_table(df: pd.DataFrame, i:int) -> str:
 
     allocation_aug_html = (
         f'<tr><td style="text-align:left"><strong>SDR allocations</strong>'
-        f'<sup>1</sup><br><i>on August 23, 2021</i></td>'
+        f"<sup>1</sup><br><i>on August 23, 2021</i></td>"
         f'<td style="text-align:center">{allocation_aug_usd}</td>'
         f'<td style="text-align:center">{allocation_aug_sdr}'
         f'</td><td style="text-align:center">{allocation_aug_gdp}</td></tr>'
@@ -191,7 +201,7 @@ def __sdr_table(df: pd.DataFrame, i:int) -> str:
 
     allocation_html = (
         f'<tr><td style="text-align:left"><strong>Cumulative SDR allocations</strong>'
-        f'<sup>2</sup><br><i>as of {allocation_date}</i></td>'
+        f"<sup>2</sup><br><i>as of {allocation_date}</i></td>"
         f'<td style="text-align:center">{allocation_usd}</td>'
         f'<td style="text-align:center">{allocation_sdr}</td>'
         f'<td style="text-align:center">{allocation_gdp}</td></tr>'
@@ -205,7 +215,7 @@ def __sdr_table(df: pd.DataFrame, i:int) -> str:
 
     holding_html = (
         f'<tr><td style="text-align:left"><strong>Current SDR holdings</strong>'
-        f'<br><i>as of {holdings_date}</i></td>'
+        f"<br><i>as of {holdings_date}</i></td>"
         f'<td style="text-align:center">{holdings_usd}</td>'
         f'<td style="text-align:center">{holdings_sdr}</td>'
         f'<td style="text-align:center">{holdings_gdp}</td></tr>'
@@ -219,35 +229,37 @@ def __sdr_table(df: pd.DataFrame, i:int) -> str:
         f"</tr>{allocation_aug_html}{allocation_html}{holding_html} </table>"
         "<br><p><i><sup>1</sup>SDR values for August 23, 2021 calculated using exchange rate from August 23"
         " - 1 USD: 0.705 SDRs</i></p>"
-        "<p><i><sup>2</sup>Cumulative SDR allocations are" 
+        "<p><i><sup>2</sup>Cumulative SDR allocations are"
         " the total amount of SDRs the country has received from the IMF over the years;"
         " it includes SDRs from the August 2021 allocation and three prior allocations</i></p>"
     )
     return table
 
 
-def __null_message(df: pd.DataFrame, column:str) -> pd.DataFrame:
+def __null_message(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Fixes text for popup and panel for countries where there is no data available"""
 
     message = "<br><p>No data available</p>"
     condition = (
-            df.text.isna()
-            & df.sdrs_allocation_aug_23_sdr.isna()
-            & df.sdr_holdings_sdr_millions.isna()
-            & df.sdr_allocation_sdr_millions.isna()
+        df.text.isna()
+        & df.sdrs_allocation_aug_23_sdr.isna()
+        & df.sdr_holdings_sdr_millions.isna()
+        & df.sdr_allocation_sdr_millions.isna()
     )
     df.loc[condition, column] = message
 
     return df
 
 
-def __country_name(df:pd.DataFrame, column:str) -> pd.DataFrame:
+def __country_name(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Adds country name to the beginning of the html string"""
 
     for i in df.index:
-        country = df.loc[i, 'country']
+        country = df.loc[i, "country"]
         html = df.loc[i, column]
-        df.loc[i, column] = f'<h1 style="text-align:center"><strong>{country}</strong></h1>{html}'
+        df.loc[
+            i, column
+        ] = f'<h1 style="text-align:center"><strong>{country}</strong></h1>{html}'
 
     return df
 
@@ -256,22 +268,22 @@ def _add_panel_html(df: pd.DataFrame) -> pd.DataFrame:
     """Creates the HTML code for the panel"""
 
     sources_df = read_sheet(1174650744)
-    df['panel_html'] = np.nan
+    df["panel_html"] = np.nan
 
     for i in df.index:
         text = df.loc[i, "text"]
         table = __sdr_table(df, i)
         sources = __sources(df, sources_df, i)
-        panel = f'<br>{table}'
+        panel = f"<br>{table}"
         if text is not np.nan:
-            panel = f'<br>{text}'+panel
+            panel = f"<br>{text}" + panel
         if sources is not np.nan:
-            panel = panel + f'<br>{sources}'
+            panel = panel + f"<br>{sources}"
 
-        df.loc[i, 'panel_html'] = panel
+        df.loc[i, "panel_html"] = panel
 
-    df = __null_message(df, 'panel_html')
-    df = __country_name(df, 'panel_html')
+    df = __null_message(df, "panel_html")
+    df = __country_name(df, "panel_html")
 
     return df
 
@@ -285,16 +297,16 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
         text = df.loc[i, "text"]
         popup = (
             '<br><p style="text-align:left;">SDR allocation: &emsp;&emsp;'
-            f'{aug_allocation} USD millions</p>'
-            #f'<span style="float:right;">{aug_allocation} USD millions</span></p>'
+            f"{aug_allocation} USD millions</p>"
+            # f'<span style="float:right;">{aug_allocation} USD millions</span></p>'
             '<p style="text-align:left;"><i>on August 23, 2021</i></p><br>'
         )
         if text is not np.nan:
-            popup += f'<p>{text}</p><br>'
+            popup += f"<p>{text}</p><br>"
         popup += f'<p style="text-align:center;"><strong>Click for more information</strong><p>'
         df.loc[i, "popup_html"] = popup
-    df = __null_message(df, 'popup_html')
-    df = __country_name(df, 'popup_html')
+    df = __null_message(df, "popup_html")
+    df = __country_name(df, "popup_html")
 
     return df
 
@@ -306,7 +318,7 @@ def create_sdr_map() -> None:
     # get files
     map_template = pd.read_csv(f"{config.paths.glossaries}/map_template.csv")
     sdr_df = read_sheet(0)
-    #sources_df = read_sheet(1174650744)
+    # sources_df = read_sheet(1174650744)
 
     # merge sdr from google with map template
     df = pd.merge(map_template, sdr_df, how="left", on="iso_code")
@@ -350,16 +362,16 @@ def create_sdr_map() -> None:
             "flourish_geom",
             "region",
             "country",
-            #"text",
-            #"sdrs_allocation_aug_23_sdr",
+            # "text",
+            # "sdrs_allocation_aug_23_sdr",
             "sdrs_allocation_aug_23_usd",
-            #"sdrs_allocation_aug_23_pct_gdp",
-            #"sdr_holdings_pct_gdp",
-           # "sdr_holdings_sdr_millions",
-            #"sdr_allocation_sdr_millions",
-            #"sdr_allocation_pct_gdp",
+            # "sdrs_allocation_aug_23_pct_gdp",
+            # "sdr_holdings_pct_gdp",
+            # "sdr_holdings_sdr_millions",
+            # "sdr_allocation_sdr_millions",
+            # "sdr_allocation_pct_gdp",
             "popup_html",
-            "panel_html"
+            "panel_html",
         ]
     ]
     df.to_csv(f"{config.paths.output}/sdr.csv", index=False)
