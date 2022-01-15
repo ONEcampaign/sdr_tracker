@@ -30,11 +30,11 @@ def __geometry_df() -> pd.DataFrame:
     # Create a dataframe with iso_code and geometry
     return (
         g.rename(columns={g.columns[0]: "flourish_geom", g.columns[1]: "iso_code"})
-            .iloc[1:]
-            .drop_duplicates(subset="iso_code", keep="first")
-            .merge(continents, on="iso_code")
-            .filter(["iso_code", "flourish_geom", "continent"], axis=1)
-            .reset_index(drop=True)
+        .iloc[1:]
+        .drop_duplicates(subset="iso_code", keep="first")
+        .merge(continents, on="iso_code")
+        .filter(["iso_code", "flourish_geom", "continent"], axis=1)
+        .reset_index(drop=True)
     )
 
 
@@ -135,10 +135,10 @@ def __null_message(df: pd.DataFrame, column: str) -> pd.DataFrame:
 
     message = "<br><p>No data available</p>"
     condition = (
-            df.text.isna()
-            & df.sdrs_allocation_aug_23_sdr.isna()
-            & df.holdings_sdr.isna()
-            & df.allocations_sdr.isna()
+        df.text.isna()
+        & df.sdrs_allocation_aug_23_sdr.isna()
+        & df.holdings_sdr.isna()
+        & df.allocations_sdr.isna()
     )
     df.loc[condition, column] = message
 
@@ -214,28 +214,26 @@ def create_sdr_map() -> None:
 
     # merge sdr from google with map template and clean
     df = pd.merge(map_template, df, how="left", on="iso_code")
-    df["sdrs_allocation_aug_23_usd"] = utils.clean_numeric_column(df["sdrs_allocation_aug_23_usd"])
-    df["sdrs_allocation_aug_23_sdr"] = utils.clean_numeric_column(df["sdrs_allocation_aug_23_sdr"])
+    df["sdrs_allocation_aug_23_usd"] = utils.clean_numeric_column(
+        df["sdrs_allocation_aug_23_usd"]
+    )
+    df["sdrs_allocation_aug_23_sdr"] = utils.clean_numeric_column(
+        df["sdrs_allocation_aug_23_sdr"]
+    )
     df = df.dropna(subset=["country"])
 
     # add holdings and allocation
     latest_sdr = download_sdr.get_latest_sdr(2021)
-    df = pd.merge(df, latest_sdr, on='iso_code', how='left')
+    df = pd.merge(df, latest_sdr, on="iso_code", how="left")
 
     # add pct_gdp columns
-    df = utils.add_pct_gdp(df, columns=["sdrs_allocation_aug_23_usd", "holdings_usd", "allocations_usd"])
+    df = utils.add_pct_gdp(
+        df, columns=["sdrs_allocation_aug_23_usd", "holdings_usd", "allocations_usd"]
+    )
 
     # add html for popups and panels
     df = _add_panel_html(df)
     df = _add_popup_html(df)
 
     # export
-    df.to_csv(f'{config.paths.output}/sdr.csv', index=False)
-
-
-
-
-
-
-
-
+    df.to_csv(f"{config.paths.output}/sdr.csv", index=False)

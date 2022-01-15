@@ -20,12 +20,14 @@ def read_sheet(grid_number: int) -> pd.DataFrame:
         raise ConnectionError("Could not read sheet")
 
 
-def add_pct_gdp(df: pd.DataFrame,
-                columns: list,
-                *,
-                gdp_year: Optional[int] = 2021,
-                weo_year: Optional[int] = 2021,
-                weo_release: Optional[int] = 2):
+def add_pct_gdp(
+    df: pd.DataFrame,
+    columns: list,
+    *,
+    gdp_year: Optional[int] = 2021,
+    weo_year: Optional[int] = 2021,
+    weo_release: Optional[int] = 2,
+):
     """
     adds column(s) to a dataframe with a value as a pct of GDP
     """
@@ -37,7 +39,7 @@ def add_pct_gdp(df: pd.DataFrame,
 
     for column in columns:
         # Divide GDP by a million and multiply by 100 to get a percentage
-        gdp_column = column.replace('_usd', '_pct_gdp')
+        gdp_column = column.replace("_usd", "_pct_gdp")
         df[gdp_column] = round(100 * df[column] / (df["gdp"] / 1e6), 2)
     df.drop(columns="gdp", inplace=True)
 
@@ -48,7 +50,7 @@ def clean_numeric_column(column: pd.Series) -> pd.Series:
 
     column = column.str.replace(",", "")
     column = pd.to_numeric(column)
-    column = round((column/1e6), 2)
+    column = round((column / 1e6), 2)
 
     return column
 
