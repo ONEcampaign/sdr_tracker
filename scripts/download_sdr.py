@@ -49,6 +49,8 @@ def _get_df(url: str, date: str) -> pd.DataFrame:
     df = pd.read_csv(url, delimiter="/t", engine="python").loc[3:]
     df = df["SDR Allocations and Holdings"].str.split("\t", expand=True)
     df.columns = ["country", "holdings", "allocations"]
+    df["holdings"] = utils.clean_numeric_column(df["holdings"])
+    df["allocations"] = utils.clean_numeric_column(df["allocations"])
     df["iso_code"] = coco.convert(df.country)
     df["date"] = date
     df.drop(columns="country", inplace=True)
@@ -64,9 +66,8 @@ def _add_usd(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     exch = exch_df.loc[exch_df.indicator == "usd_exchange_rate", "value"].values[0]
 
     for column in columns:
-        df[column] = utils.clean_numeric_column(df[column])
-        df[f"{column}_sdr"] = df[column] / exch
-        df = df.rename(columns={column: f"{column}_usd"})
+        df[f"{column}_usd"] = round(df[column] / exch, 2)
+        df = df.rename(columns={column: f"{column}_sdr"})
 
     return df
 
