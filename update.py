@@ -6,3 +6,5 @@ if __name__ == "__main__":
 
     # create flourish csv
     sdr_tracker.create_sdr_map()
+
+    print("Successfully updated SDRs Tracker")
