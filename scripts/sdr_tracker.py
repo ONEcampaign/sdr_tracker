@@ -81,7 +81,7 @@ def __sdr_table(df: pd.DataFrame, i: int) -> str:
 
     allocation_aug_html = (
         f'<tr><td style="text-align:left"><strong>SDR allocations</strong>'
-        f"<sup>1</sup><br><i>on August 23, 2021</i></td>"
+        f"<sup>1</sup><br><i>on 23 August 2021</i></td>"
         f'<td style="text-align:center">{allocation_aug_usd}</td>'
         f'<td style="text-align:center">{allocation_aug_sdr}'
         f'</td><td style="text-align:center">{allocation_aug_gdp}</td></tr>'
@@ -121,7 +121,7 @@ def __sdr_table(df: pd.DataFrame, i: int) -> str:
         f'<th style="text-align:center">SDR millions</th>'
         f'<th style="text-align:center">SDR as % of GDP</th>'
         f"</tr>{allocation_aug_html}{allocation_html}{holding_html} </table>"
-        "<br><p><i><sup>1</sup>SDR values for August 23, 2021 calculated using exchange rate from August 23"
+        "<br><p><i><sup>1</sup>USD values for 23 August 2021 are calculated using the exchange rate from 23 August"
         " - 1 USD: 0.705 SDRs</i></p>"
         "<p><i><sup>2</sup>Cumulative SDR allocations are"
         " the total amount of SDRs the country has received from the IMF over the years;"
@@ -193,7 +193,7 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
             '<br><p style="text-align:left;">SDR allocation: &emsp;&emsp;'
             f"{aug_allocation} USD millions</p>"
             # f'<span style="float:right;">{aug_allocation} USD millions</span></p>'
-            '<p style="text-align:left;"><i>on August 23, 2021</i></p><br>'
+            '<p style="text-align:left;"><i>on 23 August 2021</i></p><br>'
         )
         if text is not np.nan:
             popup += f"<p>{text}</p><br>"
