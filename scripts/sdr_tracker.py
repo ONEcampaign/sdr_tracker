@@ -165,17 +165,19 @@ def _add_panel_html(df: pd.DataFrame) -> pd.DataFrame:
     df["panel_html"] = np.nan
 
     for i in df.index:
-        holdings_pct_allocation = df.loc[i, 'holdings_pct_allocation']
-        holdings_pct_allocation_date = df.loc[i, 'date']
-        pct_used_text = ('<br><p style="text-align:left;"><strong>SDR holdings</strong>: &emsp;&emsp;&emsp;'
-                         f'<strong>{holdings_pct_allocation} % of cumulative allocations</strong></p>'
-                         f'<p style="text-align:left;"><i>as of {holdings_pct_allocation_date}</i></p><br>')
+        holdings_pct_allocation = df.loc[i, "holdings_pct_allocation"]
+        holdings_pct_allocation_date = df.loc[i, "date"]
+        pct_used_text = (
+            '<br><p style="text-align:left;"><strong>SDR holdings</strong>: &emsp;&emsp;&emsp;'
+            f"<strong>{holdings_pct_allocation} % of cumulative allocations</strong></p>"
+            f'<p style="text-align:left;"><i>as of {holdings_pct_allocation_date}</i></p><br>'
+        )
 
         text = df.loc[i, "text"]
         table = __sdr_table(df, i)
         sources = __sources(df, sources_df, i)
 
-        panel = f'<br>{pct_used_text}{table}'
+        panel = f"<br>{pct_used_text}{table}"
         if text is not np.nan:
             panel = f"<br>{text}" + panel
         if sources is not np.nan:
@@ -194,13 +196,13 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
 
     df["popup_html"] = np.nan
     for i in df.index:
-        holdings_pct_allocation = df.loc[i, 'holdings_pct_allocation']
-        holdings_pct_allocation_date = df.loc[i, 'date']
+        holdings_pct_allocation = df.loc[i, "holdings_pct_allocation"]
+        holdings_pct_allocation_date = df.loc[i, "date"]
         aug_allocation = df.loc[i, "sdrs_allocation_aug_23_usd"]
         text = df.loc[i, "text"]
         popup = (
             '<br><p style="text-align:left;"><strong>SDR holdings</strong>: &emsp;&emsp;&emsp;&emsp;'
-            f'<strong>{holdings_pct_allocation} % of cumulative allocations</strong></p>'
+            f"<strong>{holdings_pct_allocation} % of cumulative allocations</strong></p>"
             f'<p style="text-align:left;"><i>as of {holdings_pct_allocation_date}</i></p><br>'
             '<br><p style="text-align:left;">SDR allocation: &emsp;&emsp;&emsp;'
             f"{aug_allocation} USD millions</p>"
