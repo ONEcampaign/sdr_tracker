@@ -76,6 +76,17 @@ def _add_usd(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     return df
 
 
+def _add_pct_used(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Creates a new calculated column for SDRs used as a % of allocations
+    pct_used = 100*(sdr_allocations - sdr_holdings)/sdr_allocations
+    """
+
+    df['sdrs_pct_used'] = round(100 * ((df.allocations - df.holdings)/df.allocations), 2)
+
+    return df
+
+
 def get_latest_sdr(year: int):
     """
     Returns a dataframe with the latest SDR values
@@ -89,6 +100,7 @@ def get_latest_sdr(year: int):
     latest_release = _find_latest_release(year)
     tsv_url = _get_tsv_url(latest_release["url"])
     df = _get_df(url=tsv_url, date=latest_release["date"])
+    df = _add_pct_used(df)
     df = _add_usd(df, columns=["holdings", "allocations"])
 
     return df
