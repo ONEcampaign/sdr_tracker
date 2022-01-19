@@ -23,7 +23,7 @@ def _find_latest_release(year: int) -> dict:
     table = soup.find_all("table")[4].find_all("a")
 
     url = f"https://www.imf.org/external/np/fin/tad/{table[0].get('href')}"
-    date = datetime.strptime(table[0].text, '%B %d, %Y').strftime('%d %B %Y')
+    date = datetime.strptime(table[0].text, "%B %d, %Y").strftime("%d %B %Y")
 
     return {
         "date": date,
