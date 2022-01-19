@@ -82,7 +82,7 @@ def _add_pct_used(df: pd.DataFrame) -> pd.DataFrame:
     pct_used = 100*(sdr_allocations - sdr_holdings)/sdr_allocations
     """
 
-    df['sdrs_pct_used'] = round(100 * ((df.allocations - df.holdings)/df.allocations), 2)
+    df['holdings_pct_allocation'] = round(100 * (df.holdings/df.allocations), 2)
 
     return df
 
