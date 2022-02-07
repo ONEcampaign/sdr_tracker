@@ -236,7 +236,7 @@ def create_sdr_map() -> None:
     df = df.dropna(subset=["country"])
 
     # add holdings and allocation
-    latest_sdr = download_sdr.get_latest_sdr(2021)
+    latest_sdr = download_sdr.get_latest_sdr(2022)
     df = pd.merge(df, latest_sdr, on="iso_code", how="left")
 
     # add pct_gdp columns
