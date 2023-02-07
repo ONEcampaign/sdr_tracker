@@ -47,7 +47,6 @@ def add_pct_gdp(
 
 
 def clean_numeric_column(column: pd.Series) -> pd.Series:
-
     column = column.str.replace(",", "")
     column = pd.to_numeric(column)
     column = round((column / 1e6), 2)
