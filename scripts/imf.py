@@ -9,25 +9,12 @@ import requests
 from typing import Optional
 import pandas as pd
 from scripts import config
-import weo
+from bblocks import set_bblocks_data_path, WorldEconomicOutlook
 
+set_bblocks_data_path(config.Paths.raw_data)
 # ============================================================================
 # WEO tools
 # ============================================================================
-
-
-def _download_weo(year: int, release: int) -> None:
-    """Downloads WEO as a csv to glossaries folder as "weo_month_year.csv"""
-
-    try:
-        weo.download(
-            year=year,
-            release=release,
-            directory=config.paths.glossaries,
-            filename=f"weo_{year}_{release}.csv",
-        )
-    except ConnectionError:
-        raise ConnectionError("Could not download weo data")
 
 
 def _clean_weo(df: pd.DataFrame) -> pd.DataFrame:
@@ -61,16 +48,16 @@ def _clean_weo(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def get_gdp(gdp_year: int, weo_year: int, weo_release: int) -> pd.DataFrame:
+def get_gdp(gdp_year: int) -> pd.DataFrame:
     """
     Retrieves gdp value for a specific year
     """
+    weo = WorldEconomicOutlook()
+    weo.load_data("NGDPD")
 
-    _download_weo(year=weo_year, release=weo_release)
-    df = weo.WEO(f"{config.paths.glossaries}/weo_{weo_year}_{weo_release}.csv").df
-    df = _clean_weo(df)
-    df = df[(df.indicator == "NGDPD") & (df.year == gdp_year)][["iso_code", "value"]]
-    df.value = df.value * 1e9
-    df.rename(columns={"value": "gdp"}, inplace=True)
-
-    return df
+    return (
+        weo.get_data()
+        .assign(year=lambda d: d.year.dt.year, value=lambda d: d.value * 1e9)
+        .query(f"year == {gdp_year}")
+        .rename(columns={"value": "gdp"})
+    )

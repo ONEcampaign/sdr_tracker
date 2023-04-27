@@ -5,11 +5,14 @@ Created on Fri Dec  3 10:30:41 2021
 @author: LucaPicci
 """
 
-from scripts import config, utils, download_sdr
-import pandas as pd
 import numpy as np
-import country_converter as coco
-from typing import Optional
+import pandas as pd
+from bblocks import set_bblocks_data_path
+
+from scripts import config, download_sdr, utils
+import datetime
+
+set_bblocks_data_path(config.Paths.raw_data)
 
 
 # ============================================================================
@@ -22,7 +25,7 @@ def __geometry_df() -> pd.DataFrame:
     return a dataframe with iso_code, flourish geometries, and continent
     """
     # Read in the geometries
-    g = pd.read_json(config.paths.glossaries + r"/flourish_geometries_world.json")
+    g = pd.read_json(config.Paths.glossaries / "flourish_geometries_world.json")
 
     # Load a dataframe with continent information
     continents = utils.country_df()
@@ -45,7 +48,7 @@ def create_africa_map_template() -> None:
     """
     __geometry_df().loc[lambda d: d.continent == "Africa"].drop(
         "continent", axis=1
-    ).to_csv(f"{config.paths.glossaries}/map_template.csv", index=False)
+    ).to_csv(f"{config.Paths.glossaries}/map_template.csv", index=False)
 
 
 # ============================================================================
@@ -121,7 +124,8 @@ def __sdr_table(df: pd.DataFrame, i: int) -> str:
         f'<th style="text-align:center">SDR millions</th>'
         f'<th style="text-align:center">SDR as % of GDP</th>'
         f"</tr>{allocation_aug_html}{allocation_html}{holding_html} </table>"
-        "<br><p><i><sup>1</sup>USD values for 23 August 2021 are calculated using the exchange rate from 23 August"
+        "<br><p><i><sup>1</sup>USD values for 23 August 2021 are calculated using the exchange "
+        "rate from 23 August"
         " - 1 USD: 0.705 SDRs</i></p>"
         "<p><i><sup>2</sup>Cumulative SDR allocations are"
         " the total amount of SDRs the country has received from the IMF over the years;"
@@ -201,7 +205,8 @@ def _add_popup_html(df: pd.DataFrame) -> pd.DataFrame:
         aug_allocation = df.loc[i, "sdrs_allocation_aug_23_usd"]
         text = df.loc[i, "text"]
         popup = (
-            '<br><p style="text-align:left;"><strong>SDR holdings</strong>: &emsp;&emsp;&emsp;&emsp;'
+            '<br><p style="text-align:left;"><strong>SDR holdings</strong>: '
+            "&emsp;&emsp;&emsp;&emsp;"
             f"<strong>{holdings_pct_allocation} % of cumulative allocations</strong></p>"
             f'<p style="text-align:left;"><i>as of {holdings_pct_allocation_date}</i></p><br>'
             '<br><p style="text-align:left;">SDR allocation: &emsp;&emsp;&emsp;'
@@ -222,7 +227,7 @@ def create_sdr_map() -> None:
     """creates a csv for flourish map"""
 
     # get files
-    map_template = pd.read_csv(f"{config.paths.glossaries}/map_template.csv")
+    map_template = pd.read_csv(f"{config.Paths.glossaries}/map_template.csv")
     df = utils.read_sheet(0)
 
     # merge sdr from google with map template and clean
@@ -236,12 +241,15 @@ def create_sdr_map() -> None:
     df = df.dropna(subset=["country"])
 
     # add holdings and allocation
-    latest_sdr = download_sdr.get_latest_sdr(2022)
+    current_year = datetime.datetime.now().year
+    latest_sdr = download_sdr.get_latest_sdr(current_year)
     df = pd.merge(df, latest_sdr, on="iso_code", how="left")
 
     # add pct_gdp columns
     df = utils.add_pct_gdp(
-        df, columns=["sdrs_allocation_aug_23_usd", "holdings_usd", "allocations_usd"]
+        df,
+        columns=["sdrs_allocation_aug_23_usd", "holdings_usd", "allocations_usd"],
+        gdp_year=current_year,
     )
 
     # add html for popups and panels
@@ -249,4 +257,4 @@ def create_sdr_map() -> None:
     df = _add_popup_html(df)
 
     # export
-    df.to_csv(f"{config.paths.output}/sdr.csv", index=False)
+    df.to_csv(f"{config.Paths.output}/sdr.csv", index=False)

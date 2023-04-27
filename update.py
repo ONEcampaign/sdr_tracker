@@ -6,7 +6,7 @@ from datetime import datetime
 def last_updated():
     """Appends the date of last run to a csv"""
 
-    with open(config.paths.output + r"/updates.csv", "a+", newline="") as write_obj:
+    with open(config.Paths.output / "updates.csv", "a+", newline="") as write_obj:
         # Create a writer object from csv module
         csv_writer = writer(write_obj)
         # Add contents of list as last row in the csv file

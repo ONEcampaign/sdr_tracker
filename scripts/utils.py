@@ -25,23 +25,23 @@ def add_pct_gdp(
     columns: list,
     *,
     gdp_year: Optional[int] = 2021,
-    weo_year: Optional[int] = 2021,
-    weo_release: Optional[int] = 2,
 ):
     """
     adds column(s) to a dataframe with a value as a pct of GDP
     """
     # download GDP data using WEO package
-    gdp_df = imf.get_gdp(gdp_year, weo_year, weo_release)
+    gdp_df = imf.get_gdp(gdp_year)
 
     # merge GDP data with provided df
-    df = pd.merge(df, gdp_df, on="iso_code", how="left")
+    df = pd.merge(df, gdp_df, on="iso_code", how="left").assign(
+        year=lambda d: d.year.astype("Int32")
+    )
 
     for column in columns:
         # Divide GDP by a million and multiply by 100 to get a percentage
         gdp_column = column.replace("_usd", "_pct_gdp")
         df[gdp_column] = round(100 * df[column] / (df["gdp"] / 1e6), 2)
-    df.drop(columns="gdp", inplace=True)
+    df.drop(columns=["gdp", "indicator"], inplace=True)
 
     return df
 
