@@ -5,7 +5,7 @@ This repository contains data and scripts powering ONE's [SDR Tracker](https://w
 
 ## Repository Structure and Information
 
-This repository contains data and scripts to create the csv file powering the flourish visualization for the tracker. Python (>=3.7) is required and additional packages required are listed under `requirements.txt`. The main purpose of the repository is to update the SDR tracker with data extracted from the [IMF](https://www.imf.org/external/np/fin/tad/extsdr1.aspx) on SDR annoucements on holdings and allocations, and ONE's [qualitative analysis](https://docs.google.com/spreadsheets/d/1fQi941fLyk2zSyGRRkRNhct8OZU2SXGCXmDOhH4XD1c/edit#gid=0). The update can be manually triggered through the `Actions` tab.
+This repository contains data and scripts to create the csv file powering the flourish visualization for the tracker. Python (>=3.10) is required and additional packages required are listed under `requirements.txt`. The main purpose of the repository is to update the SDR tracker with data extracted from the [IMF](https://www.imf.org/external/np/fin/tad/extsdr1.aspx) on SDR annoucements on holdings and allocations, and ONE's [qualitative analysis](https://docs.google.com/spreadsheets/d/1fQi941fLyk2zSyGRRkRNhct8OZU2SXGCXmDOhH4XD1c/edit#gid=0). The update can be manually triggered through the `Actions` tab.
 
 The repository includes the following subfolders:
 - `output`: contains the CSV that powers the tracker (`sdr.csv`) and a CSV tracking each update.
@@ -14,7 +14,7 @@ The repository includes the following subfolders:
 
 ## Website and Charts
 
-The SDR tracker can be found here: https://www.one.org/africa/issues/covid-19-tracker/explore-sdrs/
+The SDR tracker can be found here: https://data.one.org/data-dives/sdr/
 
 ## Sources 
 
