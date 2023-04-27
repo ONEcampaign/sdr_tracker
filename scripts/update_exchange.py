@@ -3,9 +3,13 @@ import os
 
 import gspread
 import pandas as pd
-from bblocks.import_tools.imf import latest_sdr_exchange
+from bblocks import set_bblocks_data_path
+from bblocks.import_tools.sdr import get_latest_exchange_rate
 from oauth2client.service_account import ServiceAccountCredentials
 
+from scripts import config
+
+set_bblocks_data_path(config.Paths.raw_data)
 # Load key as json object
 KEY: json = json.loads(os.environ["SHEETS_API"])
 
@@ -48,15 +52,15 @@ def df2gsheet(df: pd.DataFrame, worksheet_obj: gspread.Worksheet) -> None:
     worksheet_obj.update([columns] + values)
 
 
-def get_latest_exchange() -> pd.DataFrame:
+def get_latest_exchange_sdr() -> pd.DataFrame:
     """Returns the latest exchange rate of the SDR"""
-    usd_exchange = latest_sdr_exchange(currency="USD")
+    usd_exchange = get_latest_exchange_rate("USD")
 
     return (
         pd.DataFrame(
             {
                 "indicator": ["usd_exchange_rate"],
-                "value": [usd_exchange["value"]],
+                "value": [usd_exchange["rate"]],
                 "date": [usd_exchange["date"]],
             }
         )
@@ -66,7 +70,7 @@ def get_latest_exchange() -> pd.DataFrame:
 
 
 def upload_exchange() -> None:
-    data = get_latest_exchange()
+    data = get_latest_exchange_sdr()
     auth = _authenticate()
     wb = _get_workbook(auth, WORKBOOK_KEY)
     sheet = _get_worksheet(wb, WORKSHEET_KEY)
