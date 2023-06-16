@@ -1,0 +1,39 @@
+name: Update RST
+'on':
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+    run-all:
+      runs-on: ubuntu-latest
+      steps:
+      - name: checkout repo content
+        uses: actions/checkout@v2
+
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run:  |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: update RST
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$PWD
+          python ./scripts/rst.py
+          
+      - name: Save changes
+        run:  |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Actions [bot]"
+          git add .
+          git commit -m "Update RST timeline"
+
+      - name: push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          
