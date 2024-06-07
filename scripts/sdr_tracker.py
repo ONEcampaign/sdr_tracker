@@ -155,9 +155,9 @@ def __country_name(df: pd.DataFrame, column: str) -> pd.DataFrame:
     for i in df.index:
         country = df.loc[i, "country"]
         html = df.loc[i, column]
-        df.loc[
-            i, column
-        ] = f'<h1 style="text-align:center"><strong>{country}</strong></h1>{html}'
+        df.loc[i, column] = (
+            f'<h1 style="text-align:center"><strong>{country}</strong></h1>{html}'
+        )
 
     return df
 
