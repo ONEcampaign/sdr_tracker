@@ -1,7 +1,7 @@
 name: Update RST
 'on':
   schedule:
-    - cron: '0 9 * * *'
+    - cron: '0 8 * * *'
   workflow_dispatch:
 
 jobs:
@@ -24,16 +24,23 @@ jobs:
         run: |
           export PYTHONPATH=$PYTHONPATH:$PWD
           python ./scripts/rst.py
-          
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet && echo 'No changes to commit' || echo '::set-output name=changed::true'
+
       - name: Save changes
         run:  |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Actions [bot]"
           git add .
           git commit -m "Update RST timeline"
+        if: steps.changes.outputs.changed == 'true'
 
       - name: push changes
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.changes.outputs.changed == 'true'
           
