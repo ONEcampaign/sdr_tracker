@@ -24,7 +24,12 @@ jobs:
         run: |
           export PYTHONPATH=$PYTHONPATH:$PWD
           python ./scripts/rst.py
-          
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet && echo 'No changes to commit' || echo '::set-output name=changed::true'
+
       - name: Save changes
         run:  |
           git config --local user.email "action@github.com"
